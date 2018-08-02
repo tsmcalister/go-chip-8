@@ -1,7 +1,6 @@
 package emulator
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -9,9 +8,29 @@ import (
 var stack [16]uint32
 var stackPointer byte
 
+func Stack() [16]uint32 {
+	return stack
+}
+
+func StackPointer() byte {
+	return stackPointer
+}
+
 // Are actually 24 bits
 var index uint32
 var programCounter uint32 = 0x200 // execution starts at this address
+
+func Index() uint32 {
+	return index
+}
+
+func SetIndex(_index uint32) {
+	index = _index
+}
+
+func ProgramCounter() uint32 {
+	return programCounter
+}
 
 var delayTimer byte = 0x0
 var soundTimer byte = 0x0
@@ -19,11 +38,11 @@ var soundTimer byte = 0x0
 func EmulateStep() {
 	print("\033[H\033[2J")
 	instr := ReadMemory(programCounter)
-	fmt.Printf("%x\n", instr)
+	//fmt.Printf("%x\n", instr)
 	ExecuteInstruction(instr)
 	UpdateTimers()
 	PrintScreen()
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 }
 
 func UpdateTimers() {
@@ -33,6 +52,15 @@ func UpdateTimers() {
 	if soundTimer > 0 {
 		soundTimer--
 	}
+}
+
+func ResetEmulator() {
+	InitMemory()
+	programCounter = 0x200
+	delayTimer = 0x0
+	soundTimer = 0x0
+	stackPointer = 0x0
+	index = 0x0
 }
 
 func ExecuteInstruction(instr Chip8Instruction) {
@@ -50,8 +78,9 @@ func ExecuteInstruction(instr Chip8Instruction) {
 			// 0x00EE
 			// Return from Subroutine
 			case 0xE:
-				programCounter = stack[stackPointer]
+				programCounter = stack[stackPointer-1]
 				stackPointer--
+				programCounter += 2
 			}
 		default:
 			// 0x0NNN
@@ -67,7 +96,7 @@ func ExecuteInstruction(instr Chip8Instruction) {
 		// 0x2NNN
 		// Execute subroutine starting at address NNN
 		stackPointer++
-		stack[stackPointer] = programCounter
+		stack[stackPointer-1] = programCounter
 		addr := uint32(nibbles[1])<<8 + uint32(nibbles[2])<<4 + uint32(nibbles[3])
 		programCounter = addr
 	case 0x3:
@@ -192,9 +221,9 @@ func ExecuteInstruction(instr Chip8Instruction) {
 			VY := ReadRegisterValue(nibbles[2])
 			StoreRegisterValue(nibbles[1], VY-VX)
 			if VX > VY {
-				StoreRegisterValue(0xf, 0x0)
-			} else {
 				StoreRegisterValue(0xf, 0x1)
+			} else {
+				StoreRegisterValue(0xf, 0x0)
 			}
 			programCounter += 2
 		case 0xE:
@@ -235,7 +264,7 @@ func ExecuteInstruction(instr Chip8Instruction) {
 	case 0xC:
 		// CXNN
 		// Set VX to a random number with a mask of NN
-		rNum := rand.Uint32()&0xff&uint32(nibbles[2])<<4 + uint32(nibbles[3])
+		rNum := byte(rand.Uint32()&0xff) & (nibbles[2]<<4 + nibbles[3])
 		StoreRegisterValue(nibbles[1], byte(rNum))
 		programCounter += 2
 	case 0xD:

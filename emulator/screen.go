@@ -5,8 +5,8 @@ import "fmt"
 // screen has 2048 pixels (black and white)
 var screen [64 * 32]bool
 
-func updateScreen() {
-
+func ReadScreen(x byte, y byte) bool {
+	return screen[x+y*64]
 }
 
 //ClearScreen sets all pixels on screen to off
@@ -17,13 +17,13 @@ func ClearScreen() {
 }
 
 func WritePixel(x byte, y byte, value bool) bool {
-	if x > 32 {
-		x -= 32
+	if x > 64 {
+		x -= 64
 	}
-	if y > 64 {
-		y -= 64
+	if y > 32 {
+		y -= 32
 	}
-	index := x + 64*y
+	index := uint32(x) + 64*uint32(y)
 	pixelSet := screen[index]
 	screen[index] = screen[index] != value
 	if pixelSet && !screen[index] {
@@ -70,4 +70,5 @@ func PrintScreen() {
 			fmt.Print(" ")
 		}
 	}
+	fmt.Println()
 }

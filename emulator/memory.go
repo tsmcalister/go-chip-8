@@ -43,7 +43,14 @@ func InstructionToBytes(instr Chip8Instruction) (byte1, byte2 byte) {
 }
 
 func InitMemory() {
+	clearMemory()
 	loadFontData()
+}
+
+func clearMemory() {
+	for i := range memory {
+		memory[i] = 0x0
+	}
 }
 
 func ReadSprite(addr uint32, n byte) []byte {
@@ -112,6 +119,13 @@ func MemoryToRegisters(addr uint32) {
 
 func DrawFlagIsSet() bool {
 	return false
+}
+
+func LoadProgramHex(program []uint16) {
+	startAddress := uint32(0x200)
+	for i, programInstr := range program {
+		WriteInstructionMemory(startAddress+uint32(i)*2, Chip8Instruction(programInstr))
+	}
 }
 
 func LoadProgram(file string) {
