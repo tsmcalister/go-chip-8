@@ -1,6 +1,10 @@
 package emulator
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"sync"
+)
 
 // screen has 2048 pixels (black and white)
 var screen [64 * 32]bool
@@ -33,7 +37,7 @@ func WritePixel(x byte, y byte, value bool) bool {
 
 }
 
-func WriteSpriteByte(x byte, y byte, spriteByte byte) bool {
+func WriteSpriteByte(x byte, y byte, spriteByte byte, flipped chan bool) {
 	flip := false
 	// binary 0b10000000
 	slidingMask := byte(0x80)
@@ -46,13 +50,20 @@ func WriteSpriteByte(x byte, y byte, spriteByte byte) bool {
 		slidingMask = slidingMask >> 1
 		i++
 	}
-	return flip
+	flipped <- flip
 }
 
 func PutSprite(x byte, y byte, sprite []byte) bool {
 	flip := false
+	flipped := make(chan bool, 100)
+	var wg sync.WaitGroup
 	for i, spriteByte := range sprite {
-		if WriteSpriteByte(x, y+byte(i), spriteByte) {
+		wg.Add(1)
+		go WriteSpriteByte(x, y+byte(i), spriteByte, flipped)
+	}
+	for range sprite {
+		msg := <-flipped
+		if msg {
 			flip = true
 		}
 	}
@@ -60,15 +71,16 @@ func PutSprite(x byte, y byte, sprite []byte) bool {
 }
 
 func PrintScreen() {
+	var buffer bytes.Buffer
 	for i, pixel := range screen {
 		if i%64 == 0 {
-			fmt.Println()
+			buffer.WriteString("\n")
 		}
 		if pixel {
-			fmt.Print("█")
+			buffer.WriteString("█")
 		} else {
-			fmt.Print(" ")
+			buffer.WriteString(" ")
 		}
 	}
-	fmt.Println()
+	fmt.Printf(buffer.String())
 }

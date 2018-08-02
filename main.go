@@ -1,13 +1,23 @@
 package main
 
 import (
+	"os"
+	"runtime"
+
 	"github.com/tsmcalister/go-chip-8/emulator"
 )
 
 func main() {
+	runtime.GOMAXPROCS(4)
+	filePath := "programs/"
+	if len(os.Args) > 1 {
+		filePath += os.Args[1]
+	} else {
+		filePath += "pic.ch8"
+	}
 
 	emulator.InitMemory()
-	emulator.LoadProgram("programs/pic.ch8")
+	emulator.LoadProgram(filePath)
 	for {
 		emulator.EmulateStep()
 	}

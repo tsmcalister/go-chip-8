@@ -2,6 +2,8 @@ package emulator
 
 import (
 	"math/rand"
+	"os"
+	"os/exec"
 	"time"
 )
 
@@ -36,11 +38,13 @@ var delayTimer byte = 0x0
 var soundTimer byte = 0x0
 
 func EmulateStep() {
-	print("\033[H\033[2J")
 	instr := ReadMemory(programCounter)
 	//fmt.Printf("%x\n", instr)
 	ExecuteInstruction(instr)
 	UpdateTimers()
+	cmd := exec.Command("clear") //Linux example, its tested
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 	PrintScreen()
 	time.Sleep(10 * time.Millisecond)
 }
