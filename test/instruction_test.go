@@ -411,16 +411,3 @@ func TestCxkk(t *testing.T) {
 		t.Error("Cxkk: random number generation not working properly")
 	}
 }
-
-func TestDxyn(t *testing.T) {
-	emulator.ResetEmulator()
-	emulator.SetIndex(0x0)
-	program := []uint16{
-		0xD005,
-	}
-	emulator.LoadProgramHex(program)
-	emulator.EmulateStep()
-	if !emulator.ReadScreen(1, 2) {
-		t.Error("Dxyn: Sprite Rendering brocken")
-	}
-}
