@@ -1,5 +1,5 @@
 # go-chip-8
-A CHIP-8 emulator written in Go (Not functional yet)
+A CHIP-8 emulator written in Go (Not fully functional yet)
 
 ## Resources
 
