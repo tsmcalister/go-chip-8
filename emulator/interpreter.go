@@ -1,10 +1,13 @@
 package emulator
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/tsmcalister/go-chip-8/keyboard"
 )
 
 var stack [16]uint32
@@ -39,14 +42,14 @@ var soundTimer byte = 0x0
 
 func EmulateStep() {
 	instr := ReadMemory(programCounter)
-	//fmt.Printf("%x\n", instr)
+	fmt.Printf("%.4x\n", instr)
 	ExecuteInstruction(instr)
 	UpdateTimers()
 	cmd := exec.Command("clear") //Linux example, its tested
 	cmd.Stdout = os.Stdout
 	cmd.Run()
 	PrintScreen()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(16 * time.Millisecond)
 }
 
 func UpdateTimers() {
@@ -289,10 +292,13 @@ func ExecuteInstruction(instr Chip8Instruction) {
 	case 0xE:
 		// EX9E
 		// Skip the following instruction if the key corresponding to the hex value currently stored in register VX is pressed
-		/*
-			TODO IMPLEMENT
-		*/
-		programCounter += 2
+		VX := ReadRegisterValue(nibbles[1])
+		pressed, key := keyboard.ReadKeyMap()
+		if pressed && key == VX {
+			programCounter += 4
+		} else {
+			programCounter += 2
+		}
 	case 0xF:
 		lastByte := nibbles[2]<<4 + nibbles[3]
 		switch lastByte {
@@ -304,7 +310,11 @@ func ExecuteInstruction(instr Chip8Instruction) {
 		case 0x0A:
 			// FX0A
 			// Wait for a keypress and store the result in register VX
-			// TODO IMPLEMENT
+			pressed, key := false, byte(0x0)
+			for !pressed {
+				pressed, key = keyboard.ReadKeyMap()
+			}
+			StoreRegisterValue(nibbles[1], key)
 			programCounter += 2
 		case 0x15:
 			// FX15
@@ -323,11 +333,13 @@ func ExecuteInstruction(instr Chip8Instruction) {
 			// Add the value stored in register VX to register I
 			VX := ReadRegisterValue(nibbles[1])
 			index = index + uint32(VX)
+			programCounter += 2
 		case 0x29:
 			// FX29
 			// Set I to the memory address of the sprite data corresponding to the hexadecimal digit stored in register VX
 			VX := ReadRegisterValue(nibbles[1])
 			index = GetFontSpriteAddress(VX)
+			programCounter += 2
 		case 0x33:
 			// FX33
 			// Store the binary-coded decimal equivalent of the value stored in register VX at addresses I, I+1, and I+2
@@ -338,12 +350,14 @@ func ExecuteInstruction(instr Chip8Instruction) {
 			WriteByteMemory(index, dec_100)
 			WriteByteMemory(index+1, dec_10)
 			WriteByteMemory(index+2, dec_1)
+			programCounter += 2
 		case 0x55:
 			// FX55
 			// Store the values of registers V0 to VX inclusive in memory starting at address I
 			// I is set to I + X + 1 after operation
 			RegistersToMemory(index)
 			index = index + uint32(nibbles[1]) + 1
+			programCounter += 2
 
 		case 0x65:
 			// FX65
@@ -351,6 +365,7 @@ func ExecuteInstruction(instr Chip8Instruction) {
 			// I is set to I + X + 1 after operation
 			MemoryToRegisters(index)
 			index = index + uint32(nibbles[1]) + 1
+			programCounter += 2
 		}
 	}
 }

@@ -5,26 +5,29 @@ import (
 	"runtime"
 
 	"github.com/tsmcalister/go-chip-8/emulator"
+	"github.com/tsmcalister/go-chip-8/keyboard"
 )
 
 func main() {
 	runtime.GOMAXPROCS(4)
+
 	filePath := "programs/"
 	if len(os.Args) > 1 {
 		filePath += os.Args[1]
 	} else {
 		filePath += "pic.ch8"
 	}
-
-	emulator.InitMemory()
+	go keyboard.StartKeyboardDeamon()
+	emulator.ResetEmulator()
 	emulator.LoadProgram(filePath)
 	for {
 		emulator.EmulateStep()
 	}
 	/*
-
 		emulator.ResetEmulator()
+		go keyboard.StartKeyboardDeamon()
 		program := []uint16{
+			0xF00A, // get keyinput
 			0xD015, // draw sprite starting at index
 			0x6005, // set vx = 0 to 5
 			0xA006, // set index to 6
@@ -81,5 +84,4 @@ func main() {
 			i++
 		}
 	*/
-
 }

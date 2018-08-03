@@ -28,6 +28,9 @@ func disassemble(fileName string) {
 	}
 	for i := 0; i < len(dat)/2; i++ {
 		instr := emulator.Chip8Instruction(uint16(dat[i*2])<<8 | uint16(dat[i*2+1]))
+		if uint16(instr)&0xF000 == 0xE000 {
+
+		}
 		fmt.Printf("0x%.4x\n", instr)
 	}
 }

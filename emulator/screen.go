@@ -3,7 +3,6 @@ package emulator
 import (
 	"bytes"
 	"fmt"
-	"sync"
 )
 
 // screen has 2048 pixels (black and white)
@@ -21,13 +20,14 @@ func ClearScreen() {
 }
 
 func WritePixel(x byte, y byte, value bool) bool {
-	if x > 64 {
+	if x >= 64 {
 		x -= 64
 	}
-	if y > 32 {
+	if y >= 32 {
 		y -= 32
 	}
 	index := uint32(x) + 64*uint32(y)
+
 	pixelSet := screen[index]
 	screen[index] = screen[index] != value
 	if pixelSet && !screen[index] {
@@ -56,9 +56,7 @@ func WriteSpriteByte(x byte, y byte, spriteByte byte, flipped chan bool) {
 func PutSprite(x byte, y byte, sprite []byte) bool {
 	flip := false
 	flipped := make(chan bool, 100)
-	var wg sync.WaitGroup
 	for i, spriteByte := range sprite {
-		wg.Add(1)
 		go WriteSpriteByte(x, y+byte(i), spriteByte, flipped)
 	}
 	for range sprite {

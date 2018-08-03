@@ -135,7 +135,3 @@ func LoadProgram(file string) {
 		WriteByteMemory(startAddress+uint32(i), programByte)
 	}
 }
-
-/*
-	Stack Implementation
-*/
