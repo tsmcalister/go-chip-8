@@ -1,7 +1,6 @@
 package emulator
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -21,13 +20,15 @@ func ClearScreen() {
 
 func WritePixel(x byte, y byte, value bool) bool {
 	if x >= 64 {
-		x -= 64
+		x %= 64
 	}
 	if y >= 32 {
-		y -= 32
+		y %= 32
 	}
 	index := uint32(x) + 64*uint32(y)
-
+	if index > 64*32 {
+		fmt.Println(x, y, value, index)
+	}
 	pixelSet := screen[index]
 	screen[index] = screen[index] != value
 	if pixelSet && !screen[index] {
@@ -68,17 +69,6 @@ func PutSprite(x byte, y byte, sprite []byte) bool {
 	return flip
 }
 
-func PrintScreen() {
-	var buffer bytes.Buffer
-	for i, pixel := range screen {
-		if i%64 == 0 {
-			buffer.WriteString("\n")
-		}
-		if pixel {
-			buffer.WriteString("█")
-		} else {
-			buffer.WriteString(" ")
-		}
-	}
-	fmt.Printf(buffer.String())
+func PrintScreen(screenCom chan []bool) {
+	screenCom <- screen[:]
 }

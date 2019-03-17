@@ -5,11 +5,11 @@ import (
 	"runtime"
 
 	"github.com/tsmcalister/go-chip-8/emulator"
-	"github.com/tsmcalister/go-chip-8/keyboard"
 )
 
 func main() {
 	runtime.GOMAXPROCS(4)
+	screenCom := make(chan []bool, 1)
 
 	filePath := "programs/"
 	if len(os.Args) > 1 {
@@ -17,11 +17,11 @@ func main() {
 	} else {
 		filePath += "pic.ch8"
 	}
-	go keyboard.StartKeyboardDeamon()
 	emulator.ResetEmulator()
 	emulator.LoadProgram(filePath)
+	go iogl.InitScreen(screenCom)
 	for {
-		emulator.EmulateStep()
+		emulator.EmulateStep(screenCom)
 	}
 	/*
 		emulator.ResetEmulator()

@@ -6,8 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"time"
-
-	"github.com/tsmcalister/go-chip-8/keyboard"
 )
 
 var stack [16]uint32
@@ -40,16 +38,18 @@ func ProgramCounter() uint32 {
 var delayTimer byte = 0x0
 var soundTimer byte = 0x0
 
-func EmulateStep() {
+func EmulateStep(screenCom chan []bool) {
 	instr := ReadMemory(programCounter)
-	fmt.Printf("%.4x\n", instr)
 	ExecuteInstruction(instr)
 	UpdateTimers()
 	cmd := exec.Command("clear") //Linux example, its tested
 	cmd.Stdout = os.Stdout
 	cmd.Run()
-	PrintScreen()
-	time.Sleep(16 * time.Millisecond)
+	instr = ReadMemory(programCounter)
+	PrintScreen(screenCom)
+	fmt.Printf("addr: %.4x instr: %.4x\n", programCounter, instr)
+	//fmt.Println(keyboard.ReadKeyMap())
+	time.Sleep(10 * time.Millisecond)
 }
 
 func UpdateTimers() {
@@ -293,7 +293,7 @@ func ExecuteInstruction(instr Chip8Instruction) {
 		// EX9E
 		// Skip the following instruction if the key corresponding to the hex value currently stored in register VX is pressed
 		VX := ReadRegisterValue(nibbles[1])
-		pressed, key := keyboard.ReadKeyMap()
+		pressed, key := false, byte(0x0)
 		if pressed && key == VX {
 			programCounter += 4
 		} else {
@@ -310,11 +310,8 @@ func ExecuteInstruction(instr Chip8Instruction) {
 		case 0x0A:
 			// FX0A
 			// Wait for a keypress and store the result in register VX
-			pressed, key := false, byte(0x0)
-			for !pressed {
-				pressed, key = keyboard.ReadKeyMap()
-			}
-			StoreRegisterValue(nibbles[1], key)
+
+			StoreRegisterValue(nibbles[1], 0x0)
 			programCounter += 2
 		case 0x15:
 			// FX15
